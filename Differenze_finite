@@ -1,1 +1,37 @@
+import numpy as np
+from scipy.linalg import eigh_tridiagonal
+
+# Parametri fisici
+hbar = 1.0
+m = 1.0
+omega = 1.0
+x_max = 5.0  # Intervallo
+N = 1000     # Numero di punti della griglia
+
+# Griglia
+x = np.linspace(-x_max, x_max, N)
+h = x[1] - x[0]
+
+# Potenziale armonico V(x) = 1/2 * m * omega^2 * x^2
+V = 0.5 * m * omega**2 * x**2
+
+# Elementi della matrice tridiagonale
+diagonal = 2.0 / h**2 + V  # Diagonale principale
+off_diagonal = -1.0 / h**2 * np.ones(N-1)  # Elementi fuori diagonale
+
+# Risolvi il problema agli autovalori tridiagonale
+E, psi = eigh_tridiagonal(diagonal, off_diagonal)
+
+# I primi autovalori corrispondono alle energie dei primi stati quantici
+print("Autovalori (energie):", E[:5])
+
+# Funzione d'onda corrispondente al primo autostato
+import matplotlib.pyplot as plt
+plt.plot(x, psi[:, 0]**2, label="Stato fondamentale")
+plt.plot(x, psi[:, 1]**2, label="Primo stato eccitato")
+plt.legend()
+plt.xlabel('x')
+plt.ylabel('$|\psi(x)|^2$')
+plt.title('Densità di probabilità per i primi due stati')
+plt.show()
 
