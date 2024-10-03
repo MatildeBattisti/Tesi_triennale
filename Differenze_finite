@@ -1,37 +1,81 @@
 import numpy as np
 from scipy.linalg import eigh_tridiagonal
-
-# Parametri fisici
-hbar = 1.0
-m = 1.0
-omega = 1.0
-x_max = 5.0  # Intervallo
-N = 1000     # Numero di punti della griglia
-
-# Griglia
-x = np.linspace(-x_max, x_max, N)
-h = x[1] - x[0]
-
-# Potenziale armonico V(x) = 1/2 * m * omega^2 * x^2
-V = 0.5 * m * omega**2 * x**2
-
-# Elementi della matrice tridiagonale
-diagonal = 2.0 / h**2 + V  # Diagonale principale
-off_diagonal = -1.0 / h**2 * np.ones(N-1)  # Elementi fuori diagonale
-
-# Risolvi il problema agli autovalori tridiagonale
-E, psi = eigh_tridiagonal(diagonal, off_diagonal)
-
-# I primi autovalori corrispondono alle energie dei primi stati quantici
-print("Autovalori (energie):", E[:5])
-
-# Funzione d'onda corrispondente al primo autostato
 import matplotlib.pyplot as plt
-plt.plot(x, psi[:, 0]**2, label="Stato fondamentale")
-plt.plot(x, psi[:, 1]**2, label="Primo stato eccitato")
-plt.legend()
-plt.xlabel('x')
-plt.ylabel('$|\psi(x)|^2$')
-plt.title('Densità di probabilità per i primi due stati')
-plt.show()
 
+
+# Definition of parameters
+def Hbar() -> float:  # hbar
+    return 1
+
+def Mass() -> float:  # m
+    return 1
+
+def Frequency() -> float:  #omega
+    return 1
+
+def MeshPoints() -> float:  # N
+    return 1000
+
+def MeshHalfLenght() -> float:  # x
+    return 5
+
+
+# Mesh spacing
+def LenghtVariable() -> float:  # X
+    x = MeshHalfLenght()
+    N = MeshPoints()
+    return np.linspace(-x, x, N)
+
+def Spacing() -> float:  # h
+    X = LenghtVariable()
+    return (X[1] - X[0])
+
+
+# Harmonic oscillator's potential
+# V = 1/2 * m * omega^2 * x^2
+def PotentialEnergy() -> float:  # q
+    m = Mass()
+    omega = Frequency()
+    X = LenghtVariable()
+    return 0.5 * m * omega**2 * X**2
+
+
+# Tridiagonal matrix definition
+def Diagonal():
+    q = PotentialEnergy()
+    h = Spacing()
+    return (2 / h**2) + q
+
+def OffDiagonal():
+    h = Spacing()
+    N = MeshPoints()
+    return -(1 / h**2) * np.ones(N-1)
+
+def EigenvaluesEigenvectors():# -> list[tuple[Nfloats, Ntuples]]:
+    diagonal = Diagonal()
+    off_diagonal = OffDiagonal()
+    return eigh_tridiagonal(diagonal, off_diagonal)
+
+
+# Eigenvalues and eigenvectors (wavefunctions) definitions from tridiagonal matrix
+def Eigenvalues() -> list:
+    E = EigenvaluesEigenvectors()[0]
+    return E
+    
+print("Autovalori (energie) dell'oscillatore armonico quantistico:", Eigenvalues()[:10])
+
+def WaveFunctions():
+    psi = EigenvaluesEigenvectors()[1]
+    return psi
+
+
+# Plot of the wavefunctions
+x = LenghtVariable()
+psi = WaveFunctions()
+
+plt.plot(x, psi[:, 0]**2, label="Stato fondamentale", color="cornflowerblue")
+plt.plot(x, psi[:, 1]**2, label="Primo stato eccitato", color="orangered")
+plt.legend()
+plt.xlabel("x")
+plt.ylabel("$|\psi(x)|^2$")
+plt.title("Densità di probabilità per i primi due stati")
