@@ -1,1 +1,105 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp   # Solve initial values problems
 
+
+# Mesh lenght
+def LenghtVariable():
+    return np.linspace(0, 5, 1000)   # Start, Stop, MeshPoints
+
+
+# Definition of the energy guess range
+def EGuess():
+    return [0.5, 1.5]   # Ground state and first excited state, non-dimentional case
+
+
+# Initial values
+"""
+In order to find a solution for
+-> even n, we set Psi0 as an arbitrary constant 
+       (realistically very small to avoid singolarity in zero)
+-> odd n, we set Psi0=0 and Psi1 as an arbitrary constant
+"""
+def Psi0() -> float:
+    return 1e-5
+
+def PsiPrime0() -> float:
+    return 1e-5
+
+
+# Definition of Schrodinger's equation
+def Schrodinger(E, psi, x) -> list[tuple[float, float]]:
+    """
+    E : energy
+    psi : array[psi, psi'] wavefunction and its first derivative
+    x : position
+    """
+    psi_val, psi_prime = psi
+    dpsi_prime = (x**2 - E) * psi_val   # Schrodinger equation in non-dimentional form
+    return [psi_prime, dpsi_prime]   # Array of first and second derivatives of the wf
+
+
+# Shooting function
+def Shooting(E):
+    """
+    Uses the solve_ivp to find a solution for the wavefunction psi.
+    The integral's variable is the space coordinate x;
+    the initial values are given by the array defined as psi_in;
+    the energy is the additional argument that gets passed to the user-defined functions.
+    As results of the integration we get a list of psi and its n-derivatives.
+    """
+    X = LenghtVariable()
+    psi_0 = Psi0()
+    psi_prime_0 = PsiPrime0()
+    
+    # Initial condition's array
+    psi_in = [psi_0, psi_prime_0]
+    
+    # ODE's numerical solution with integration method for ivp
+    sol = solve_ivp(Schrodinger, [X[0], X[-1]], psi_in, t_eval=X, args=(E,))
+    
+    return sol.y[0], sol.y[1]   # Returning psi and psi'
+
+
+# Bisection method for energy guessing
+def Energy():
+    """
+    The 'while' cycle allows to find the mean energy value and calculate the wf through
+        the shooting integration while the energy interval is bigger than a given
+        tolerance.
+    We then consider the value of the wf on the right space boundary:
+        if negative, the guessed energy is lower than it needs to be,
+        hence we redefine the mean value as E_max;
+        if positive, we redefine the mean value as E_min.
+    In the end we find a mean value for which the wf is close to 0 at its right boundary.
+    """
+    E_guess = EGuess()
+    E_min, E_max = E_guess[0], E_guess[1]
+    tol = 1e-6
+    
+    while E_max - E_min > tol:
+        E_mid = (E_min + E_max) / 2
+        psi, _ = Shooting(E_mid)
+        
+        # Shooting condition: we want psi close to 0 for x = x_max
+        if psi[-1] * Shooting(E_min)[0][-1] < 0:
+            E_max = E_mid
+        else:
+            E_min = E_mid
+    
+    return (E_min + E_max) / 2
+    
+
+# Wave function plot
+X = LenghtVariable()
+E = Energy()
+psi, _ = Shooting(E)
+
+
+plt.plot(X, psi**2, label=f"Stato con energia = {E:.3f}", color="cornflowerblue")
+plt.xlabel(r"$\tilde{x}$")
+plt.ylabel(r"$|\psi(\tilde{x})|^2$")
+plt.title("Metodo di shooting con bisezione")
+plt.legend()
+plt.grid()
+plt.show()
