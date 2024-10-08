@@ -3,14 +3,15 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp   # Solve initial values problems
 
 
+
 # Mesh lenght
 def LenghtVariable():
-    return np.linspace(0, 5, 1000)   # Start, Stop, MeshPoints
+    return np.linspace(-5, 5, 1000)   # Start, Stop, MeshPoints
 
 
 # Definition of the energy guess range
 def EGuess():
-    return [0.5, 1.5]   # Ground state and first excited state, non-dimentional case
+    return [1.0, 2.50]   # Ground state and first excited state, non-dimentional case
 
 
 # Initial values
@@ -21,21 +22,22 @@ In order to find a solution for
 -> odd n, we set Psi0=0 and Psi1 as an arbitrary constant
 """
 def Psi0() -> float:
-    return 1e-5
+    return 1
 
 def PsiPrime0() -> float:
-    return 1e-5
+    return 0
 
 
 # Definition of Schrodinger's equation
-def Schrodinger(E, psi, x) -> list[tuple[float, float]]:
+def Schrodinger(x, psi, E) -> list[tuple[float, float]]:
     """
     E : energy
     psi : array[psi, psi'] wavefunction and its first derivative
     x : position
     """
+    #X = LenghtVariable()
     psi_val, psi_prime = psi
-    dpsi_prime = (x**2 - E) * psi_val   # Schrodinger equation in non-dimentional form
+    dpsi_prime = (x**2 - 2*E) * psi_val   # Schrodinger equation in non-dimentional form
     return [psi_prime, dpsi_prime]   # Array of first and second derivatives of the wf
 
 
@@ -53,16 +55,12 @@ def Shooting(E):
     psi_prime_0 = PsiPrime0()
     
     # Initial condition's array
-    psi_in = [psi_0, psi_prime_0]
+    psi_init = [psi_0, psi_prime_0]
     
     # ODE's numerical solution with integration method for ivp
-    sol = solve_ivp(Schrodinger, [X[0], X[-1]], psi_in, t_eval=X, args=(E,))
+    sol = solve_ivp(Schrodinger, [X[0], X[-1]], psi_init, args=(E,), t_eval=X)
     
     return sol.y[0], sol.y[1]   # Returning psi and psi'
-
-
-# Bisection method for energy guessing
-def Energy():
     """
     The 'while' cycle allows to find the mean energy value and calculate the wf through
         the shooting integration while the energy interval is bigger than a given
@@ -73,6 +71,9 @@ def Energy():
         if positive, we redefine the mean value as E_min.
     In the end we find a mean value for which the wf is close to 0 at its right boundary.
     """
+    
+# Bisection method for energy guessing
+def Energy():
     E_guess = EGuess()
     E_min, E_max = E_guess[0], E_guess[1]
     tol = 1e-6
@@ -93,13 +94,18 @@ def Energy():
 # Wave function plot
 X = LenghtVariable()
 E = Energy()
-psi, _ = Shooting(E)
+psi0, _ = Shooting(E)
 
 
-plt.plot(X, psi**2, label=f"Stato con energia = {E:.3f}", color="cornflowerblue")
+#plt.plot(X, psi0**2, label="Stato fondamentale", color="cornflowerblue")
+plt.plot(X, psi0**2, label="Primo stato eccitato", color="orangered") # not sure
 plt.xlabel(r"$\tilde{x}$")
 plt.ylabel(r"$|\psi(\tilde{x})|^2$")
 plt.title("Metodo di shooting con bisezione")
 plt.legend()
 plt.grid()
 plt.show()
+
+
+# Eigenvalues
+print("Autovalori (energie) dell'oscillatore armonico quantistico:", E)
