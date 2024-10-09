@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.linalg import eigh_tridiagonal
+from scipy.linalg import eigh
 import matplotlib.pyplot as plt
 
 
@@ -41,20 +41,20 @@ def PotentialEnergy() -> float:  # q
 
 
 # Tridiagonal matrix definition
-def Diagonal():
-    q = PotentialEnergy()
-    h = Spacing()
-    return (2 / h**2) + q
-
-def OffDiagonal():
-    h = Spacing()
+def EigenvaluesEigenvectors():
     N = MeshPoints()
-    return -(1 / h**2) * np.ones(N-1)
-
-def EigenvaluesEigenvectors():# -> list[tuple[Nfloats, Ntuples]]:
-    diagonal = Diagonal()
-    off_diagonal = OffDiagonal()
-    return eigh_tridiagonal(diagonal, off_diagonal)
+    h = Spacing()
+    q = PotentialEnergy()
+    hbar = Hbar()
+    m = Mass()
+    H = np.zeros((N, N))
+    
+    for i in range(1, N-1):
+        H[i, i-1] = -hbar**2 / (2 * m * h**2)
+        H[i, i]   = hbar**2 / (m * h**2) + q[i]
+        H[i, i+1] = H[i, i-1]
+    H[0, 0] = H[N-1, N-1] = 1e10   # infinite potential to avoid singularities
+    return eigh(H)
 
 
 # Eigenvalues and eigenvectors (wavefunctions) definitions from tridiagonal matrix
